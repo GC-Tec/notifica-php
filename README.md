@@ -173,13 +173,34 @@ $notifica->devices->registerMobile(
 
 ## Token de sessão do cliente
 
-Necessário para autenticar conexões WebSocket e requisições de inbox no frontend:
+Necessário para autenticar conexões WebSocket e requisições de inbox no frontend.
 
 ```php
 $token = $notifica->customerTokens->mint("users:{$user->id}");
 
-$token['token'];     // token de sessão
-$token['expiresAt']; // data de expiração (ISO 8601)
+$token->token;     // string — token de sessão
+$token->expiresAt; // DateTimeImmutable — data de expiração
+```
+
+### Iniciar uma sessão web em uma chamada
+
+Registra a instalação web e gera o token de uma vez — ideal para o endpoint de sessão
+consumido pelo frontend:
+
+```php
+$token = $notifica->startWebSession(
+    installationKey: $installationKey,
+    customerExternalId: "users:{$user->id}",
+    name: $user->name,
+    email: $user->email,
+);
+```
+
+Os objetos de resposta implementam `JsonSerializable` (emitindo `snake_case`), então podem ser
+retornados diretamente de um controller:
+
+```php
+return response()->json($token); // { "token": "...", "expires_at": "..." }
 ```
 
 ---
@@ -188,6 +209,8 @@ $token['expiresAt']; // data de expiração (ISO 8601)
 
 ### Listar notificações
 
+`list()` retorna um `Notifica\Responses\InboxPage` (também serializável para JSON):
+
 ```php
 $inbox = $notifica->inbox->list(
     customerExternalId: "users:{$user->id}",
@@ -195,14 +218,47 @@ $inbox = $notifica->inbox->list(
     perPage: 20,
     readStatus: 'unread', // 'all', 'read' ou 'unread'
 );
+
+$inbox->total;
+$inbox->hasNextPage;
+
+foreach ($inbox->items as $notification) {
+    $notification->id;
+    $notification->title;     // ?string
+    $notification->body;
+    $notification->data;      // payload definido pela aplicação (o SDK não interpreta)
+    $notification->createdAt; // DateTimeImmutable
+    $notification->isRead();
+}
+
+return response()->json($inbox); // { "data": [...], "meta": {...} }
 ```
 
 ### Marcar como lida / não lida
 
+Retornam o `Notifica\Responses\CustomerNotification` atualizado:
+
 ```php
-$notifica->inbox->markAsRead($notificationId, "users:{$user->id}");
-$notifica->inbox->markAsUnread($notificationId, "users:{$user->id}");
+$notification = $notifica->inbox->markAsRead($notificationId, "users:{$user->id}");
+$notification = $notifica->inbox->markAsUnread($notificationId, "users:{$user->id}");
 ```
+
+---
+
+## Tempo real (inbox)
+
+O contrato do canal de tempo real é exposto em `Notifica\Realtime` para evitar strings mágicas
+no frontend:
+
+```php
+use Notifica\Realtime;
+
+Realtime::NAMESPACE;            // "/customer-events" — namespace Socket.IO
+Realtime::EVENT_INBOX_UPDATED;  // "inbox.updated" — recarregue a inbox ao receber este evento
+```
+
+Conecte um cliente Socket.IO a `{baseUrl}` + `Realtime::NAMESPACE`, autenticado com o token de
+sessão, e recarregue a inbox quando `Realtime::EVENT_INBOX_UPDATED` for emitido.
 
 ---
 
