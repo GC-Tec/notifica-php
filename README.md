@@ -220,6 +220,7 @@ $inbox = $notifica->inbox->list(
 );
 
 $inbox->total;
+$inbox->unreadTotal; // total de notificações não lidas do cliente
 $inbox->hasNextPage;
 
 foreach ($inbox->items as $notification) {
