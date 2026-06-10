@@ -8,6 +8,7 @@ use Notifica\Resources\CustomerTokensResource;
 use Notifica\Resources\DevicesResource;
 use Notifica\Resources\InboxResource;
 use Notifica\Resources\NotificationsResource;
+use Notifica\Responses\CustomerToken;
 
 class NotificaClient
 {
@@ -32,6 +33,27 @@ class NotificaClient
         $this->customerTokens = new CustomerTokensResource($http);
         $this->inbox = new InboxResource($http);
         $this->notifications = new NotificationsResource($http);
+    }
+
+    /**
+     * Bootstrap a client-side web session: register the web installation and mint a
+     * session token in one call. Use the returned token to authenticate the inbox and
+     * the realtime connection (see {@see Realtime}).
+     */
+    public function startWebSession(
+        string $installationKey,
+        string $customerExternalId,
+        ?string $name = null,
+        ?string $email = null,
+    ): CustomerToken {
+        $this->devices->registerWeb(
+            installationKey: $installationKey,
+            customerExternalId: $customerExternalId,
+            name: $name,
+            email: $email,
+        );
+
+        return $this->customerTokens->mint($customerExternalId);
     }
 
     /**
