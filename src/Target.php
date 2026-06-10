@@ -36,6 +36,11 @@ class Target
         return new self(['type' => 'tag', 'tags' => array_values($tags)]);
     }
 
+    public static function customerTag(string $tag): self
+    {
+        return new self(['type' => 'customer_tag', 'tag' => $tag]);
+    }
+
     public function toArray(): array
     {
         return $this->payload;

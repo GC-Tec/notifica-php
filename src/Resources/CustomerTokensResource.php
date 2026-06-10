@@ -14,7 +14,7 @@ class CustomerTokensResource extends Resource
     public function mint(string $customerExternalId): CustomerToken
     {
         return CustomerToken::fromArray($this->request('POST', 'customer-tokens', [
-            'json' => ['customerExternalId' => $customerExternalId],
+            'json' => ['customer_external_id' => $customerExternalId],
         ]));
     }
 }

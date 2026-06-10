@@ -18,7 +18,7 @@ class NotificaClient
 
     private readonly NotificationsResource $notifications;
 
-    public function __construct(string $accessToken, string $baseUrl = 'https://api.notifica.dev')
+    public function __construct(string $accessToken, string $baseUrl = 'https://api.notifica.dev/v1')
     {
         $http = new Client([
             'base_uri' => rtrim($baseUrl, '/') . '/',
