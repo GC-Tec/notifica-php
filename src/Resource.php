@@ -24,8 +24,10 @@ abstract class Resource
             $rawBody = $e->getResponse()->getBody()->getContents();
             $body = $rawBody !== '' ? (array) json_decode($rawBody, associative: true) : [];
 
+            $message = $body['message'] ?? $e->getMessage();
+
             throw new NotificaException(
-                message: $body['message'] ?? $e->getMessage(),
+                message: is_array($message) ? implode(' ', $message) : (string) $message,
                 statusCode: $e->getResponse()->getStatusCode(),
                 response: $body,
                 previous: $e,
